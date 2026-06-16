@@ -248,13 +248,19 @@ export default function App() {
         body: JSON.stringify({ text }),
       });
       const data = await res.json();
-      if (data.sentiment) {
+      const sObj = data.sentiment || (data.category ? data : null);
+      if (sObj) {
         const chanMsgs = messages[activeChannel.id] || [];
         const updated = chanMsgs.map((m) => {
           if (m.id === msgId) {
             return {
               ...m,
-              sentiment: data.sentiment,
+              sentiment: {
+                category: sObj.category,
+                score: sObj.score,
+                explanation: sObj.explanation,
+                tip: sObj.tip
+              },
             };
           }
           return m;
@@ -306,18 +312,20 @@ export default function App() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            message: userText,
             text: userText,
             history: receptionistHistory,
           }),
         });
         const data = await res.json();
-        if (data.reply) {
+        const replyText = data.reply || data.response;
+        if (replyText) {
           const systemMsg: Message = {
             id: `msg-system-${Date.now()}`,
             sender: "Automated Receptionist",
             senderRole: "AI Client Intake Bot",
             avatar: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&h=100&fit=crop",
-            text: data.reply,
+            text: replyText,
             timestamp: "Just Now",
           };
 
@@ -329,7 +337,7 @@ export default function App() {
           setReceptionistHistory(prev => [
             ...prev,
             { sender: "user", text: userText },
-            { sender: "receptionist", text: data.reply }
+            { sender: "receptionist", text: replyText }
           ]);
         }
       } catch (err) {
@@ -435,19 +443,22 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fileName: uploadFileName,
+          fileContent: uploadTextContent,
           content: uploadTextContent
         }),
       });
       const data = await res.json();
+      const takeawaysList = data.takeaways || (data.summary ? [data.summary] : ["No quick takeaways parsed."]);
+      
       const newFileObj: FileShare = {
         id: `file-${Date.now()}`,
         fileName: uploadFileName,
         fileSize: "1.2 KB",
         uploader: "Me (Operations)",
         uploadedAt: "Just Now",
-        category: "Operational Report",
-        description: `Uploaded dispatch guidelines: ${uploadFileName}`,
-        takeaways: data.summary ? [data.summary] : ["No quick takeaways parsed."],
+        category: data.category || "Operational Report",
+        description: data.description || `Uploaded dispatch guidelines: ${uploadFileName}`,
+        takeaways: takeawaysList,
         contentSample: uploadTextContent
       };
 
@@ -464,8 +475,8 @@ export default function App() {
         fileAttachment: {
           fileName: uploadFileName,
           fileSize: "1.2 KB",
-          category: "Operations Doc",
-          summary: data.summary || "Pending digest"
+          category: data.category || "Operations Doc",
+          summary: data.description || data.summary || "Pending digest"
         }
       };
 
@@ -560,13 +571,16 @@ export default function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          transcript: rawTranscriptsString,
           transcripts: rawTranscriptsString,
+          workspaceName: activeWorkspace.name,
           channel: activeCall.channelName
         })
       });
       const data = await res.json();
-      if (data.report) {
-        setCallReport(data.report);
+      const reportObj = data.report || (data.title ? data : null);
+      if (reportObj) {
+        setCallReport(reportObj);
         setActiveTab("ai-studio"); // Redirect directly to show the minutes!
       }
     } catch (e) {
@@ -588,6 +602,7 @@ export default function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          contentType: genType,
           type: genType,
           tone: genTone,
           context: genContext
@@ -611,19 +626,21 @@ export default function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          message: text,
           text,
           history: receptionistHistory,
         }),
       });
       const data = await res.json();
-      if (data.reply) {
+      const replyText = data.reply || data.response;
+      if (replyText) {
         setReceptionistHistory(prev => [
           ...prev,
           { sender: "user", text },
-          { sender: "receptionist", text: data.reply }
+          { sender: "receptionist", text: replyText }
         ]);
         // Speech voice synth replies
-        speakTextRef(data.reply);
+        speakTextRef(replyText);
       }
     } catch (err) {
       console.error("Synthesiser failed", err);
