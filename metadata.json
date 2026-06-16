@@ -1,0 +1,6 @@
+{
+  "name": "AfriCall",
+  "description": "The AI-powered communication and collaboration platform built for African businesses—featuring low-bandwidth calls, real-time transcription, translation, and automated meeting notes.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
