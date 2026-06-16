@@ -30,7 +30,9 @@ import {
   Sun,
   LayoutGrid,
   FileDown,
-  Sparkle
+  Sparkle,
+  Menu,
+  X
 } from "lucide-react";
 import {
   Workspace,
@@ -58,6 +60,7 @@ import SettingsView from "./components/SettingsView";
 export default function App() {
   // Theme State
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // App General State
   const [workspaces, setWorkspaces] = useState<Workspace[]>(initialWorkspaces);
@@ -655,25 +658,37 @@ export default function App() {
       <header className={`border-b ${
         isDarkMode ? "bg-neutral-950/80 border-white/5" : "bg-white border-slate-200 shadow-xs"
       } backdrop-blur-md sticky top-0 z-40 px-4 py-3`} id="top-nav-bar-container">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
           
-          {/* Glowing Brand Title */}
-          <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-600/20">
-              <span className="text-black font-extrabold text-base tracking-tighter">Af</span>
+          <div className="flex items-center justify-between w-full md:w-auto">
+            {/* Glowing Brand Title */}
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-600/20">
+                <span className="text-black font-extrabold text-base tracking-tighter">Af</span>
+              </div>
+              <div>
+                <h1 className="text-sm font-black uppercase tracking-widest text-white flex items-center gap-1 font-display">
+                  AfriCall <span className="text-[9px] bg-orange-600/10 text-orange-400 p-0.5 px-1.5 rounded font-mono font-bold">AI PLATFORM</span>
+                </h1>
+                <p className={`text-[10px] ${isDarkMode ? "text-slate-400" : "text-slate-500"} font-light`}>
+                  Enterprise workspace for distributed team configurations
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-sm font-black uppercase tracking-widest text-white flex items-center gap-1 font-display">
-                AfriCall <span className="text-[9px] bg-orange-600/10 text-orange-400 p-0.5 px-1.5 rounded font-mono font-bold">AI PLATFORM</span>
-              </h1>
-              <p className={`text-[10px] ${isDarkMode ? "text-slate-400" : "text-slate-502"} font-light`}>
-                Enterprise workspace for distributed team configurations
-              </p>
-            </div>
+
+            {/* Hamburger / Menu icon for mobile */}
+            <button
+              id="mobile-menu-hamburger-btn"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-2 rounded-xl bg-orange-600/10 hover:bg-orange-600/20 text-orange-400 hover:text-white transition-colors cursor-pointer"
+              title="Toggle AfriCall Modules Menu"
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
 
           {/* Core switches (Data saving mode, target translator dialect) */}
-          <div className="flex items-center gap-3.5 flex-wrap">
+          <div className="flex items-center gap-3.5 flex-wrap w-full md:w-auto justify-between md:justify-end">
             
             {/* Active Workspace Selector */}
             <div className="flex items-center gap-1.5 shrink-0 bg-black/45 p-1 rounded-lg border border-white/5">
@@ -728,12 +743,82 @@ export default function App() {
         </div>
       </header>
 
+      {/* Mobile/Tablet Menu Drawer overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className={`lg:hidden border-b ${
+              isDarkMode ? "bg-neutral-950 border-white/5" : "bg-white border-slate-200 shadow-lg"
+            } overflow-hidden`}
+            id="mobile-navigation-drawer"
+          >
+            <div className="p-4 space-y-4 max-w-7xl mx-auto">
+              <div>
+                <span className="text-[9px] uppercase font-bold text-gray-500 tracking-wider block font-mono mb-2">AfriCall Modules</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {[
+                    { id: "dashboard", label: "Dashboard & Activity", icon: LayoutGrid },
+                    { id: "messaging", label: "Team Chat Rooms", icon: Users },
+                    { id: "voice-calls", label: "Audio VoIP Keypad", icon: Phone },
+                    { id: "video-meetings", label: "Video Meet Lounge", icon: Video },
+                    { id: "ai-studio", label: "AI Intelligence Studio", icon: Brain },
+                    { id: "agent-builder", label: "AI Voice Agent Builder", icon: Sliders },
+                    { id: "analytics", label: "Enterprise Analytics", icon: BarChart },
+                    { id: "settings", label: "Platform Settings", icon: Settings },
+                  ].map((item) => {
+                    const IconComp = item.icon;
+                    const isAct = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        id={`mobile-sidebar-tab-btn-${item.id}`}
+                        onClick={() => {
+                          setActiveTab(item.id);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`w-full text-left p-3 rounded-xl flex items-center justify-between text-xs font-semibold tracking-wide transition-all ${
+                          isAct
+                            ? "bg-orange-600 text-black shadow-lg shadow-orange-600/10"
+                            : "text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <IconComp className="w-4 h-4" />
+                          {item.label}
+                        </span>
+                        {isAct && <span className="h-1.5 w-1.5 rounded-full bg-black"></span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Mobile Hub Diagnostics info */}
+              <div className={`p-4 rounded-xl border ${
+                isDarkMode ? "bg-white/[0.02] border-white/5" : "bg-slate-100/50 border-slate-200"
+              } text-xs font-light leading-relaxed space-y-1`}>
+                <span className="text-[9px] uppercase font-bold text-gray-500 tracking-wider block font-mono">Hub Diagnostics</span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <p>Location: <span className="font-semibold text-white">{activeWorkspace.region}</span></p>
+                  <p>Currency: <span className="font-mono text-white font-bold">{activeWorkspace.currency}</span></p>
+                  <p>Active Staff: <span className="text-white font-medium">{activeWorkspace.membersCount} operators</span></p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Main Layout containing Side Tabs Navigation and main workspace panel */}
       <div className="max-w-7xl mx-auto px-4 py-6" id="africall-applet-inner-grid">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
           {/* Navigation Sidebar panel (Left 3 columns) */}
-          <nav className="lg:col-span-3 space-y-4" id="left-sidebar-navigation-rail">
+          <nav className="hidden lg:block lg:col-span-3 space-y-4" id="left-sidebar-navigation-rail">
             <div className={`p-4 rounded-2xl border ${
               isDarkMode ? "bg-neutral-950/60 border-white/5" : "bg-white border-slate-200"
             } space-y-3.5`}>
